@@ -1,0 +1,20 @@
+stages:
+  - docker-build
+
+docker-build:
+  tags:
+    - deploy
+  stage: docker-build
+  image:
+    name: gcr.io/kaniko-project/executor:latest
+    entrypoint: [""]
+  variables:
+    VERSION: 4.2.21
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$DOCKER_HOST\":{\"auth\":\"$DOCKER_AUTH_ACCOUNT\"}}}" > /kaniko/.docker/config.json
+    - export https_proxy=http://$DEVOPS_PROXY http_proxy=http://$DEVOPS_PROXY HTTPS_PROXY=$DEVOPS_PROXY HTTP_PROXY=$DEVOPS_PROXY
+    - /kaniko/executor --context "${CI_PROJECT_DIR}" --dockerfile "${CI_PROJECT_DIR}/Dockerfile" --destination "$DOCKER_HOST/exabgp:${VERSION}" --build-arg VERSION=$VERSION --build-arg PROXY=$DEVOPS_PROXY
+  only:
+    refs:
+      - master
